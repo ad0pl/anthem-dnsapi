@@ -1,0 +1,833 @@
+{
+  "openapi" : "3.0.0",
+  "servers" : [ {
+    "description" : "Anthem's DNSDHCP API server",
+    "url" : "https://nadsapi.internal.das/api/v1.0"
+  } ],
+  "info" : {
+    "version" : "v1.0",
+    "title" : "Anthem self-service DNS API",
+    "description" : "API used to interact with DNS and address allocation",
+    "contact" : {
+      "email" : "dl-DNSDHCPSupport@anthem.com",
+      "name" : "Anthem DNS/DHCP Operational Support"
+    }
+  },
+  "paths" : {
+    "/schema" : {
+      "get" : {
+        "summary" : "return back the API schema",
+        "description" : "Returns back the API schema in OpenAPIv3.0.0 YAML format",
+        "responses" : {
+          "200" : {
+            "description" : "Success",
+            "content" : {
+              "application/text" : {
+                "schema" : {
+                  "type" : "string",
+                  "description" : "The API schema"
+                }
+              }
+            }
+          },
+          "401" : {
+            "$ref" : "#/components/responses/UnauthorizedError"
+          }
+        }
+      }
+    },
+    "/views" : {
+      "get" : {
+        "summary" : "List the views available in Infoblox",
+        "responses" : {
+          "200" : {
+            "description" : "List of views",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "string",
+                    "example" : "WLP-default-internal"
+                  }
+                }
+              }
+            }
+          },
+          "401" : {
+            "$ref" : "#/components/responses/UnauthorizedError"
+          }
+        }
+      }
+    },
+    "/record_host" : {
+      "post" : {
+        "summary" : "Create an Infoblox host object",
+        "description" : "Create a host object in Infoblox.  The host object will have both forward and reverse mapping records created.  A host object can only have 1 address associated with it.\n",
+        "operationId" : "create_record_host",
+        "requestBody" : {
+          "description" : "A HostRecordItem that describes the host record to be created\n",
+          "required" : true,
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/HostRecordItem"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "201" : {
+            "description" : "Object was created in Infoblox",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/HostRecordItem"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "There was a bad field that was past in usually in that the hostname or address is already in use."
+          },
+          "401" : {
+            "$ref" : "#/components/responses/UnauthorizedError"
+          },
+          "403" : {
+            "$ref" : "#/components/responses/UnauthorizedError"
+          }
+        }
+      }
+    },
+    "/record_host/{view}/{domain}/{name}" : {
+      "get" : {
+        "summary" : "An Infoblox host object reference",
+        "description" : "This resource represents the specific host object in Infoblox.\n",
+        "operationId" : "search_record_host_by_view_and_fqdn",
+        "parameters" : [ {
+          "name" : "view",
+          "in" : "path",
+          "description" : "Infoblox record view field",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "domain",
+          "in" : "path",
+          "description" : "Infoblox record domain field",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "name",
+          "in" : "path",
+          "description" : "Infoblox record name field",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Object was found in Infoblox",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/HostRecordItem"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "More than 1 record was returned for that DNS record in that view.  Contact DNS Support for additional help."
+          },
+          "401" : {
+            "$ref" : "#/components/responses/UnauthorizedError"
+          },
+          "403" : {
+            "$ref" : "#/components/responses/UnauthorizedError"
+          },
+          "404" : {
+            "$ref" : "#/components/responses/ObjectNotFoundError"
+          }
+        }
+      },
+      "put" : {
+        "summary" : "Update an Infoblox host object reference",
+        "description" : "This operation will update a host object's IP address.\n",
+        "operationId" : "update_record_host_by_view_and_fqdn",
+        "requestBody" : {
+          "description" : "A HostRecordItem that describes the host record to be created\n",
+          "required" : true,
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/HostRecordItem"
+              }
+            }
+          }
+        },
+        "parameters" : [ {
+          "name" : "view",
+          "in" : "path",
+          "description" : "Infoblox record view field",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "domain",
+          "in" : "path",
+          "description" : "Infoblox record domain field",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "name",
+          "in" : "path",
+          "description" : "Infoblox record name field",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Object was updated",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/HostRecordItem"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "bad parameter in the request body"
+          },
+          "401" : {
+            "$ref" : "#/components/responses/UnauthorizedError"
+          },
+          "403" : {
+            "$ref" : "#/components/responses/UnauthorizedError"
+          },
+          "404" : {
+            "$ref" : "#/components/responses/ObjectNotFoundError"
+          }
+        }
+      },
+      "delete" : {
+        "summary" : "Delete an Infoblox host object",
+        "parameters" : [ {
+          "name" : "view",
+          "in" : "path",
+          "description" : "Infoblox record view field",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "domain",
+          "in" : "path",
+          "description" : "Infoblox record domain field",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "name",
+          "in" : "path",
+          "description" : "Infoblox record name field",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Object was deleted in Infoblox",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/HostRecordItem"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "bad parameter"
+          },
+          "401" : {
+            "$ref" : "#/components/responses/UnauthorizedError"
+          },
+          "403" : {
+            "$ref" : "#/components/responses/UnauthorizedError"
+          },
+          "404" : {
+            "$ref" : "#/components/responses/ObjectNotFoundError"
+          }
+        }
+      }
+    },
+    "/record_alias" : {
+      "post" : {
+        "summary" : "Create an Infoblox alias records",
+        "operationId" : "create_record_alias",
+        "description" : "Create a new Alias DNS record.\n",
+        "responses" : {
+          "201" : {
+            "description" : "Alias was created in Infoblox",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AliasRecordItem"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "There was a bad field that was past in usually in that the hostname or address is already in use."
+          },
+          "401" : {
+            "$ref" : "#/components/responses/UnauthorizedError"
+          },
+          "403" : {
+            "$ref" : "#/components/responses/UnauthorizedError"
+          }
+        }
+      }
+    },
+    "/record_alias/{view}/{domain}/{name}" : {
+      "get" : {
+        "summary" : "An Infoblox alias object reference",
+        "description" : "This resource represents the specific alias object in Infoblox.\n",
+        "operationId" : "search_alias_by_view_and_fqdn",
+        "parameters" : [ {
+          "name" : "view",
+          "in" : "path",
+          "description" : "Infoblox record view field",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "domain",
+          "in" : "path",
+          "description" : "Infoblox record domain field",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "name",
+          "in" : "path",
+          "description" : "Infoblox record name field",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Object was found in Infoblox",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AliasRecordItem"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "More than 1 record was returned for that DNS record in that view.  Contact DNS Support for additional help."
+          },
+          "401" : {
+            "$ref" : "#/components/responses/UnauthorizedError"
+          },
+          "403" : {
+            "$ref" : "#/components/responses/UnauthorizedError"
+          },
+          "404" : {
+            "$ref" : "#/components/responses/ObjectNotFoundError"
+          }
+        }
+      },
+      "put" : {
+        "summary" : "Update an Infoblox alias object reference",
+        "description" : "This operation will update an alias object's target destination.\n",
+        "operationId" : "update_record_alias_by_view_and_fqdn",
+        "requestBody" : {
+          "description" : "A AliasRecordItem that describes the alias record with it's new values.\n",
+          "required" : true,
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AliasRecordItem"
+              }
+            }
+          }
+        },
+        "parameters" : [ {
+          "name" : "view",
+          "in" : "path",
+          "description" : "Infoblox record view field",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "domain",
+          "in" : "path",
+          "description" : "Infoblox record domain field",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "name",
+          "in" : "path",
+          "description" : "Infoblox record name field",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Object was updated",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AliasRecordItem"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "bad parameter in the request body"
+          },
+          "401" : {
+            "$ref" : "#/components/responses/UnauthorizedError"
+          },
+          "403" : {
+            "$ref" : "#/components/responses/UnauthorizedError"
+          },
+          "404" : {
+            "$ref" : "#/components/responses/ObjectNotFoundError"
+          }
+        }
+      },
+      "delete" : {
+        "summary" : "Delete an Infoblox Alias object",
+        "parameters" : [ {
+          "name" : "view",
+          "in" : "path",
+          "description" : "Infoblox record view field",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "domain",
+          "in" : "path",
+          "description" : "Infoblox record domain field",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "name",
+          "in" : "path",
+          "description" : "Infoblox record name field",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Object was deleted in Infoblox",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AliasRecordItem"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "bad parameter"
+          },
+          "401" : {
+            "$ref" : "#/components/responses/UnauthorizedError"
+          },
+          "403" : {
+            "$ref" : "#/components/responses/UnauthorizedError"
+          },
+          "404" : {
+            "$ref" : "#/components/responses/ObjectNotFoundError"
+          }
+        }
+      }
+    },
+    "/record_a" : {
+      "post" : {
+        "summary" : "Create an Infoblox object for DNS A records",
+        "operationId" : "create_record_a",
+        "description" : "Create a new DNS A record.\n",
+        "responses" : {
+          "201" : {
+            "description" : "DNS A record was created in Infoblox",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ARecordItem"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "There was a bad field that was past in usually in that the hostname or address is already in use."
+          },
+          "401" : {
+            "$ref" : "#/components/responses/UnauthorizedError"
+          },
+          "403" : {
+            "$ref" : "#/components/responses/UnauthorizedError"
+          }
+        }
+      }
+    },
+    "/record_a/{view}/{domain}/{name}" : {
+      "get" : {
+        "summary" : "An Infoblox DNS A Record object reference",
+        "description" : "This resource represents the specific A object in Infoblox. Infoblox A records can have multiple addresses (Round Robin) and/or can be wild cards.  Does not populate reverse DNS\n",
+        "operationId" : "search_a_by_view_and_fqdn",
+        "parameters" : [ {
+          "name" : "view",
+          "in" : "path",
+          "description" : "Infoblox record view field",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "domain",
+          "in" : "path",
+          "description" : "Infoblox record domain field",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "name",
+          "in" : "path",
+          "description" : "Infoblox record name field",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Object was found in Infoblox",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ARecordItem"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "More than 1 record was returned for that DNS record in that view.  Contact DNS Support for additional help."
+          },
+          "401" : {
+            "$ref" : "#/components/responses/UnauthorizedError"
+          },
+          "403" : {
+            "$ref" : "#/components/responses/UnauthorizedError"
+          },
+          "404" : {
+            "$ref" : "#/components/responses/ObjectNotFoundError"
+          }
+        }
+      },
+      "put" : {
+        "summary" : "Update an Infoblox A Record object reference",
+        "description" : "This operation will update an A record object's within Infoblox.\n",
+        "operationId" : "update_record_a_by_view_and_fqdn",
+        "requestBody" : {
+          "description" : "A ARecordItem that describes the A record with it's new values.\n",
+          "required" : true,
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ARecordItem"
+              }
+            }
+          }
+        },
+        "parameters" : [ {
+          "name" : "view",
+          "in" : "path",
+          "description" : "Infoblox record view field",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "domain",
+          "in" : "path",
+          "description" : "Infoblox record domain field",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "name",
+          "in" : "path",
+          "description" : "Infoblox record name field",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Object was updated",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ARecordItem"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "bad parameter in the request body"
+          },
+          "401" : {
+            "$ref" : "#/components/responses/UnauthorizedError"
+          },
+          "403" : {
+            "$ref" : "#/components/responses/UnauthorizedError"
+          },
+          "404" : {
+            "$ref" : "#/components/responses/ObjectNotFoundError"
+          }
+        }
+      },
+      "delete" : {
+        "summary" : "Delete an Infoblox A Record object",
+        "parameters" : [ {
+          "name" : "view",
+          "in" : "path",
+          "description" : "Infoblox record view field",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "domain",
+          "in" : "path",
+          "description" : "Infoblox record domain field",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "name",
+          "in" : "path",
+          "description" : "Infoblox record name field",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Object was deleted in Infoblox",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ARecordItem"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "bad parameter"
+          },
+          "401" : {
+            "$ref" : "#/components/responses/UnauthorizedError"
+          },
+          "403" : {
+            "$ref" : "#/components/responses/UnauthorizedError"
+          },
+          "404" : {
+            "$ref" : "#/components/responses/ObjectNotFoundError"
+          }
+        }
+      }
+    }
+  },
+  "components" : {
+    "securitySchemes" : {
+      "basicAuth" : {
+        "type" : "http",
+        "scheme" : "basic"
+      },
+      "cookieAuth" : {
+        "type" : "apiKey",
+        "in" : "cookie",
+        "name" : "ibapauth",
+        "description" : "After the initial basicAuth scheme is used, all responses will Set-Cookie with ibapauth.  This cookie can be used for all requests afterwards and have the same security as the initial basicAuth credentials."
+      }
+    },
+    "responses" : {
+      "UnauthorizedError" : {
+        "description" : "Authenication information is missing or invalid.",
+        "headers" : {
+          "WWW_Authenticate" : {
+            "schema" : {
+              "type" : "string"
+            }
+          }
+        }
+      },
+      "ObjectNotFoundError" : {
+        "description" : "The requested object was not found in Infoblox"
+      }
+    },
+    "schemas" : {
+      "HostRecordItem" : {
+        "type" : "object",
+        "description" : "A Host Record is one that will have both forward and reverse DNS records.",
+        "required" : [ "name", "view", "address", "change_control" ],
+        "properties" : {
+          "name" : {
+            "type" : "string",
+            "description" : "short name of the hostname of the object",
+            "format" : "hostname",
+            "example" : "app"
+          },
+          "view" : {
+            "type" : "string",
+            "description" : "DNS view record should be resolvable, is field is case senitive.",
+            "example" : "WLP-internal-default"
+          },
+          "address" : {
+            "type" : "string",
+            "description" : "Address this record is allocated to",
+            "format" : "ipv4",
+            "example" : "1.1.1.1"
+          },
+          "change_control" : {
+            "type" : "string",
+            "description" : "Record of change that authorizes this change",
+            "example" : "CHG12345"
+          },
+          "domain" : {
+            "type" : "string",
+            "description" : "Domain this DNS record belongs to",
+            "example" : "internal.das",
+            "default" : "aws.internal.das"
+          },
+          "link" : {
+            "type" : "string",
+            "description" : "uri that points to this HostRecordItem",
+            "example" : "/api/v0.1/record_host/WLP-default-internal/aws.internal.das/app"
+          }
+        }
+      },
+      "AliasRecordItem" : {
+        "type" : "object",
+        "description" : "An Alias record is one that will point to another DNS record for resolving.  Use this record type of the desired endpoint is already registered in DNS as another name.",
+        "required" : [ "name", "view", "canonical", "change_control" ],
+        "properties" : {
+          "name" : {
+            "type" : "string",
+            "description" : "short name of the hostname of the object",
+            "format" : "hostname",
+            "example" : "app"
+          },
+          "domain" : {
+            "type" : "string",
+            "description" : "Domain this DNS record belongs to",
+            "example" : "internal.das",
+            "default" : "aws.internal.das"
+          },
+          "view" : {
+            "type" : "string",
+            "description" : "DNS view record should be resolvable, is field is case senitive.",
+            "example" : "WLP-internal-default"
+          },
+          "canonical" : {
+            "type" : "string",
+            "format" : "hostname",
+            "example" : "ip-22-174-253-254.aws.internal.das"
+          },
+          "change_control" : {
+            "type" : "string",
+            "description" : "Record of change that authorizes this change",
+            "example" : "CHG12345"
+          },
+          "link" : {
+            "type" : "string",
+            "description" : "uri that points to this AliasRecordItem",
+            "example" : "/api/v0.1/record_alias/WLP-default-internal/aws.internal.das/app"
+          }
+        }
+      },
+      "ARecordItem" : {
+        "type" : "object",
+        "required" : [ "name", "domain", "view", "addresses", "change_control" ],
+        "properties" : {
+          "name" : {
+            "type" : "string",
+            "description" : "short name of the hostname of the object",
+            "format" : "hostname",
+            "example" : "app"
+          },
+          "domain" : {
+            "type" : "string",
+            "description" : "Domain this DNS record belongs to",
+            "example" : "internal.das",
+            "default" : "aws.internal.das"
+          },
+          "view" : {
+            "type" : "string",
+            "example" : "WLP-internal-default"
+          },
+          "addresses" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "format" : "ipv4"
+            },
+            "example" : "1.1.1.1"
+          },
+          "change_control" : {
+            "type" : "string",
+            "description" : "Record of change that authorizes this change",
+            "example" : "CHG12345"
+          },
+          "link" : {
+            "type" : "string",
+            "description" : "uri that points to this ARecordItem",
+            "example" : "/api/v0.1/record_a/WLP-default-internal/aws.internal.das/app"
+          }
+        }
+      }
+    }
+  },
+  "security" : [ {
+    "basicAuth" : [ ]
+  }, {
+    "cookieAuth" : [ ]
+  } ]
+}
