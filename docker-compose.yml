@@ -1,0 +1,14 @@
+# docker-compose.yml
+version: '3'
+services:
+  flask:
+    build: flask-app
+    volumes:
+      - "./anthem-dnsapi.log:/var/log/anthem-dnsapi.log"
+
+  nginx:
+    build: nginx
+    ports:
+      - 5000:80
+    depends_on:
+      - flask
