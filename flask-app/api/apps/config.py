@@ -24,7 +24,7 @@ class DevelopmentConfig(Config):
     DEBUG = True
 
     # Logging - https://docs.python.org/2/library/logging.html
-    LOG_FILE = '/var/log/anthem-dnsapi.log'
+    LOG_FILE = '/var/log/anthem-dnsapi-log/api.log'
 
 class TestingConfig(Config):
     # Flask
@@ -33,21 +33,21 @@ class TestingConfig(Config):
     TESTING = True
 
     # Logging - https://docs.python.org/2/library/logging.html
-    LOG_FILE = '/var/log/anthem-dnsapi.log'
+    LOG_FILE = '/var/log/anthem-dnsapi-log/api.log'
 
 class StagingConfig(Config):
     # Flask
     ENV = 'staging'
 
     # Logging - https://docs.python.org/2/library/logging.html
-    LOG_FILE = '/var/log/anthem-dnsapi.log'
+    LOG_FILE = '/var/log/anthem-dnsapi-log/api.log'
 
 class ProductionConfig(Config):
     # Flask
     ENV = 'production'
 
     # Logging - https://docs.python.org/2/library/logging.html
-    LOG_FILE = '/var/log/anthem-dnsapi.log'
+    LOG_FILE = '/var/log/anthem-dnsapi-log/api.log'
 
 def config_options(option):
     # Validate configuration option.

@@ -51,7 +51,7 @@ class FlaskRestApi(object):
         """
 
         # Initialize Flask-Restful instance with Flask application context and custom errors.
-        rest_api = self.api(app, errors=http_status_codes)
+        rest_api = self.api(app, prefix="/api/v1.0", errors=http_status_codes)
 
         [endpoint_registry(rest_api) for endpoint_registry in endpoint_registries]
 

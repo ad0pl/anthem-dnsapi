@@ -14,15 +14,18 @@ class record_host(Resource):
 
     # Retrieve
     def get(self, view=None, domain=None, name=None):
-        self.logger.debug("get = %s/%s/%s" % (view,domain,name))
+        self.logger.error("get = %s/%s/%s" % (view,domain,name))
         return { }, 200
 
     # Update
     def put(self, view=None, domain=None, name=None):
-        self.logger.debug("get = %s/%s/%s" % (view,domain,name))
+        self.logger.debug("put = %s/%s/%s" % (view,domain,name))
+        self.logger.info("put = %s/%s/%s" % (view,domain,name))
+        self.logger.warning("put = %s/%s/%s" % (view,domain,name))
+        self.logger.error("put = %s/%s/%s" % (view,domain,name))
         return { }, 200
 
     # Delete
     def delete(self, view=None, domain=None, name=None):
-        self.logger.debug("get = %s/%s/%s" % (view,domain,name))
+        self.logger.debug("delete = %s/%s/%s" % (view,domain,name))
         return { }, 200

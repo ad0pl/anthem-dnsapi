@@ -40,5 +40,6 @@ def configure_logging(app):
     # TODO - configure for all extensions.
     app.logger.addHandler(file_handler)
 
-    faker_logger = logging.getLogger('faker.factory')
-    faker_logger.setLevel(logging.INFO)
+    app_logger = logging.getLogger('api.apps')
+    app_logger.setLevel(logging.INFO)
+    app_logger.addHandler(file_handler)

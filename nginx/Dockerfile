@@ -12,3 +12,5 @@ RUN rm /etc/nginx/conf.d/default.conf
 # Python dependencies
 COPY app.conf /etc/nginx/conf.d
 
+RUN touch /usr/share/nginx/html/favicon.ico
+COPY html2/index.html /usr/share/nginx/html/index.html
