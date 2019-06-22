@@ -1,0 +1,532 @@
+<div class="main-content">
+  <h2><a name=""></a></h2>
+  <p>This is the  API</p>
+
+  <h2><a name="createRecordA"></a>createRecordA</h2>
+  <hr>
+  <p></p>
+  <p>Create a new DNS A record. </p>
+  <h3 class="section">URL</h3>
+  <code>https://nadsapi.internal.das/api/v1.0/record_a</code>
+  <h3 class="section">HTTP Method</h3>
+  <code>POST</code>
+  <h3 class="section">Response Type</h3>
+  <div class="model" data-model="ARecordItem"><a href="">ARecordItem</a></div>
+  <h3 class="section">Parameters</h3>
+  <ul>
+  </ul>
+  <h2><a name="createRecordAlias"></a>createRecordAlias</h2>
+  <hr>
+  <p></p>
+  <p>Create a new Alias DNS record. </p>
+  <h3 class="section">URL</h3>
+  <code>https://nadsapi.internal.das/api/v1.0/record_alias</code>
+  <h3 class="section">HTTP Method</h3>
+  <code>POST</code>
+  <h3 class="section">Response Type</h3>
+  <div class="model" data-model="AliasRecordItem"><a href="">AliasRecordItem</a></div>
+  <h3 class="section">Parameters</h3>
+  <ul>
+  </ul>
+  <h2><a name="createRecordHost"></a>createRecordHost</h2>
+  <hr>
+  <p></p>
+  <p>Create a host object in Infoblox.  The host object will have both forward and reverse mapping records created.  A host object can only have 1 address associated with it. </p>
+  <h3 class="section">URL</h3>
+  <code>https://nadsapi.internal.das/api/v1.0/record_host</code>
+  <h3 class="section">HTTP Method</h3>
+  <code>POST</code>
+  <h3 class="section">Response Type</h3>
+  <div class="model" data-model="HostRecordItem"><a href="">HostRecordItem</a></div>
+  <h3 class="section">Parameters</h3>
+  <ul>
+	  <li class="parameter">
+      
+      
+      
+      
+      <span class="param-in">Body: </span>
+      <span class="param-name">body</span>
+      <span class="param-type">HostRecordItem(HostRecordItem)</span>
+      
+      <p class="param-description">A HostRecordItem that describes the host record to be created
+</p>
+	  </li>
+  </ul>
+  <h2><a name="recordAViewDomainNameDelete"></a>recordAViewDomainNameDelete</h2>
+  <hr>
+  <p></p>
+  
+  <h3 class="section">URL</h3>
+  <code>https://nadsapi.internal.das/api/v1.0/record_a/{view}/{domain}/{name}</code>
+  <h3 class="section">HTTP Method</h3>
+  <code>DELETE</code>
+  <h3 class="section">Response Type</h3>
+  <div class="model" data-model="ARecordItem"><a href="">ARecordItem</a></div>
+  <h3 class="section">Parameters</h3>
+  <ul>
+	  <li class="parameter">
+      
+      
+      <span class="param-in">Path: </span>
+      
+      
+      <span class="param-name">view</span>
+      <span class="param-type">String</span>
+      
+      <p class="param-description">Infoblox record view field</p>
+	  </li>
+	  <li class="parameter">
+      
+      
+      <span class="param-in">Path: </span>
+      
+      
+      <span class="param-name">domain</span>
+      <span class="param-type">String</span>
+      
+      <p class="param-description">Infoblox record domain field</p>
+	  </li>
+	  <li class="parameter">
+      
+      
+      <span class="param-in">Path: </span>
+      
+      
+      <span class="param-name">name</span>
+      <span class="param-type">String</span>
+      
+      <p class="param-description">Infoblox record name field</p>
+	  </li>
+  </ul>
+  <h2><a name="recordAliasViewDomainNameDelete"></a>recordAliasViewDomainNameDelete</h2>
+  <hr>
+  <p></p>
+  
+  <h3 class="section">URL</h3>
+  <code>https://nadsapi.internal.das/api/v1.0/record_alias/{view}/{domain}/{name}</code>
+  <h3 class="section">HTTP Method</h3>
+  <code>DELETE</code>
+  <h3 class="section">Response Type</h3>
+  <div class="model" data-model="AliasRecordItem"><a href="">AliasRecordItem</a></div>
+  <h3 class="section">Parameters</h3>
+  <ul>
+	  <li class="parameter">
+      
+      
+      <span class="param-in">Path: </span>
+      
+      
+      <span class="param-name">view</span>
+      <span class="param-type">String</span>
+      
+      <p class="param-description">Infoblox record view field</p>
+	  </li>
+	  <li class="parameter">
+      
+      
+      <span class="param-in">Path: </span>
+      
+      
+      <span class="param-name">domain</span>
+      <span class="param-type">String</span>
+      
+      <p class="param-description">Infoblox record domain field</p>
+	  </li>
+	  <li class="parameter">
+      
+      
+      <span class="param-in">Path: </span>
+      
+      
+      <span class="param-name">name</span>
+      <span class="param-type">String</span>
+      
+      <p class="param-description">Infoblox record name field</p>
+	  </li>
+  </ul>
+  <h2><a name="recordHostViewDomainNameDelete"></a>recordHostViewDomainNameDelete</h2>
+  <hr>
+  <p></p>
+  
+  <h3 class="section">URL</h3>
+  <code>https://nadsapi.internal.das/api/v1.0/record_host/{view}/{domain}/{name}</code>
+  <h3 class="section">HTTP Method</h3>
+  <code>DELETE</code>
+  <h3 class="section">Response Type</h3>
+  <div class="model" data-model="HostRecordItem"><a href="">HostRecordItem</a></div>
+  <h3 class="section">Parameters</h3>
+  <ul>
+	  <li class="parameter">
+      
+      
+      <span class="param-in">Path: </span>
+      
+      
+      <span class="param-name">view</span>
+      <span class="param-type">String</span>
+      
+      <p class="param-description">Infoblox record view field</p>
+	  </li>
+	  <li class="parameter">
+      
+      
+      <span class="param-in">Path: </span>
+      
+      
+      <span class="param-name">domain</span>
+      <span class="param-type">String</span>
+      
+      <p class="param-description">Infoblox record domain field</p>
+	  </li>
+	  <li class="parameter">
+      
+      
+      <span class="param-in">Path: </span>
+      
+      
+      <span class="param-name">name</span>
+      <span class="param-type">String</span>
+      
+      <p class="param-description">Infoblox record name field</p>
+	  </li>
+  </ul>
+  <h2><a name="schemaGet"></a>schemaGet</h2>
+  <hr>
+  <p></p>
+  <p>Returns back the API schema in OpenAPI v3.0.0 YAML format</p>
+  <h3 class="section">URL</h3>
+  <code>https://nadsapi.internal.das/api/v1.0/schema</code>
+  <h3 class="section">HTTP Method</h3>
+  <code>GET</code>
+  <h3 class="section">Response Type</h3>
+  <div class="model" data-model="string"><a href="">String</a></div>
+  <h3 class="section">Parameters</h3>
+  <ul>
+  </ul>
+  <h2><a name="searchAByViewAndFqdn"></a>searchAByViewAndFqdn</h2>
+  <hr>
+  <p></p>
+  <p>This resource represents the specific A object in Infoblox. Infoblox A records can have multiple addresses (Round Robin) and/or can be wild cards.  Does not populate reverse DNS </p>
+  <h3 class="section">URL</h3>
+  <code>https://nadsapi.internal.das/api/v1.0/record_a/{view}/{domain}/{name}</code>
+  <h3 class="section">HTTP Method</h3>
+  <code>GET</code>
+  <h3 class="section">Response Type</h3>
+  <div class="model" data-model="ARecordItem"><a href="">ARecordItem</a></div>
+  <h3 class="section">Parameters</h3>
+  <ul>
+	  <li class="parameter">
+      
+      
+      <span class="param-in">Path: </span>
+      
+      
+      <span class="param-name">view</span>
+      <span class="param-type">String</span>
+      
+      <p class="param-description">Infoblox record view field</p>
+	  </li>
+	  <li class="parameter">
+      
+      
+      <span class="param-in">Path: </span>
+      
+      
+      <span class="param-name">domain</span>
+      <span class="param-type">String</span>
+      
+      <p class="param-description">Infoblox record domain field</p>
+	  </li>
+	  <li class="parameter">
+      
+      
+      <span class="param-in">Path: </span>
+      
+      
+      <span class="param-name">name</span>
+      <span class="param-type">String</span>
+      
+      <p class="param-description">Infoblox record name field</p>
+	  </li>
+  </ul>
+  <h2><a name="searchAliasByViewAndFqdn"></a>searchAliasByViewAndFqdn</h2>
+  <hr>
+  <p></p>
+  <p>This resource represents the specific alias object in Infoblox. </p>
+  <h3 class="section">URL</h3>
+  <code>https://nadsapi.internal.das/api/v1.0/record_alias/{view}/{domain}/{name}</code>
+  <h3 class="section">HTTP Method</h3>
+  <code>GET</code>
+  <h3 class="section">Response Type</h3>
+  <div class="model" data-model="AliasRecordItem"><a href="">AliasRecordItem</a></div>
+  <h3 class="section">Parameters</h3>
+  <ul>
+	  <li class="parameter">
+      
+      
+      <span class="param-in">Path: </span>
+      
+      
+      <span class="param-name">view</span>
+      <span class="param-type">String</span>
+      
+      <p class="param-description">Infoblox record view field</p>
+	  </li>
+	  <li class="parameter">
+      
+      
+      <span class="param-in">Path: </span>
+      
+      
+      <span class="param-name">domain</span>
+      <span class="param-type">String</span>
+      
+      <p class="param-description">Infoblox record domain field</p>
+	  </li>
+	  <li class="parameter">
+      
+      
+      <span class="param-in">Path: </span>
+      
+      
+      <span class="param-name">name</span>
+      <span class="param-type">String</span>
+      
+      <p class="param-description">Infoblox record name field</p>
+	  </li>
+  </ul>
+  <h2><a name="searchRecordHostByViewAndFqdn"></a>searchRecordHostByViewAndFqdn</h2>
+  <hr>
+  <p></p>
+  <p>This resource represents the specific host object in Infoblox. </p>
+  <h3 class="section">URL</h3>
+  <code>https://nadsapi.internal.das/api/v1.0/record_host/{view}/{domain}/{name}</code>
+  <h3 class="section">HTTP Method</h3>
+  <code>GET</code>
+  <h3 class="section">Response Type</h3>
+  <div class="model" data-model="HostRecordItem"><a href="">HostRecordItem</a></div>
+  <h3 class="section">Parameters</h3>
+  <ul>
+	  <li class="parameter">
+      
+      
+      <span class="param-in">Path: </span>
+      
+      
+      <span class="param-name">view</span>
+      <span class="param-type">String</span>
+      
+      <p class="param-description">Infoblox record view field</p>
+	  </li>
+	  <li class="parameter">
+      
+      
+      <span class="param-in">Path: </span>
+      
+      
+      <span class="param-name">domain</span>
+      <span class="param-type">String</span>
+      
+      <p class="param-description">Infoblox record domain field</p>
+	  </li>
+	  <li class="parameter">
+      
+      
+      <span class="param-in">Path: </span>
+      
+      
+      <span class="param-name">name</span>
+      <span class="param-type">String</span>
+      
+      <p class="param-description">Infoblox record name field</p>
+	  </li>
+  </ul>
+  <h2><a name="updateRecordAByViewAndFqdn"></a>updateRecordAByViewAndFqdn</h2>
+  <hr>
+  <p></p>
+  <p>This operation will update an A record object&#x27;s within Infoblox. </p>
+  <h3 class="section">URL</h3>
+  <code>https://nadsapi.internal.das/api/v1.0/record_a/{view}/{domain}/{name}</code>
+  <h3 class="section">HTTP Method</h3>
+  <code>PUT</code>
+  <h3 class="section">Response Type</h3>
+  <div class="model" data-model="ARecordItem"><a href="">ARecordItem</a></div>
+  <h3 class="section">Parameters</h3>
+  <ul>
+	  <li class="parameter">
+      
+      
+      
+      
+      <span class="param-in">Body: </span>
+      <span class="param-name">body</span>
+      <span class="param-type">ARecordItem(ARecordItem)</span>
+      
+      <p class="param-description">A ARecordItem that describes the A record with it&#x27;s new values.
+</p>
+	  </li>
+	  <li class="parameter">
+      
+      
+      <span class="param-in">Path: </span>
+      
+      
+      <span class="param-name">view</span>
+      <span class="param-type">String</span>
+      
+      <p class="param-description">Infoblox record view field</p>
+	  </li>
+	  <li class="parameter">
+      
+      
+      <span class="param-in">Path: </span>
+      
+      
+      <span class="param-name">domain</span>
+      <span class="param-type">String</span>
+      
+      <p class="param-description">Infoblox record domain field</p>
+	  </li>
+	  <li class="parameter">
+      
+      
+      <span class="param-in">Path: </span>
+      
+      
+      <span class="param-name">name</span>
+      <span class="param-type">String</span>
+      
+      <p class="param-description">Infoblox record name field</p>
+	  </li>
+  </ul>
+  <h2><a name="updateRecordAliasByViewAndFqdn"></a>updateRecordAliasByViewAndFqdn</h2>
+  <hr>
+  <p></p>
+  <p>This operation will update an alias object&#x27;s target destination. </p>
+  <h3 class="section">URL</h3>
+  <code>https://nadsapi.internal.das/api/v1.0/record_alias/{view}/{domain}/{name}</code>
+  <h3 class="section">HTTP Method</h3>
+  <code>PUT</code>
+  <h3 class="section">Response Type</h3>
+  <div class="model" data-model="AliasRecordItem"><a href="">AliasRecordItem</a></div>
+  <h3 class="section">Parameters</h3>
+  <ul>
+	  <li class="parameter">
+      
+      
+      
+      
+      <span class="param-in">Body: </span>
+      <span class="param-name">body</span>
+      <span class="param-type">AliasRecordItem(AliasRecordItem)</span>
+      
+      <p class="param-description">A AliasRecordItem that describes the alias record with it&#x27;s new values.
+</p>
+	  </li>
+	  <li class="parameter">
+      
+      
+      <span class="param-in">Path: </span>
+      
+      
+      <span class="param-name">view</span>
+      <span class="param-type">String</span>
+      
+      <p class="param-description">Infoblox record view field</p>
+	  </li>
+	  <li class="parameter">
+      
+      
+      <span class="param-in">Path: </span>
+      
+      
+      <span class="param-name">domain</span>
+      <span class="param-type">String</span>
+      
+      <p class="param-description">Infoblox record domain field</p>
+	  </li>
+	  <li class="parameter">
+      
+      
+      <span class="param-in">Path: </span>
+      
+      
+      <span class="param-name">name</span>
+      <span class="param-type">String</span>
+      
+      <p class="param-description">Infoblox record name field</p>
+	  </li>
+  </ul>
+  <h2><a name="updateRecordHostByViewAndFqdn"></a>updateRecordHostByViewAndFqdn</h2>
+  <hr>
+  <p></p>
+  <p>This operation will update a host object&#x27;s IP address. </p>
+  <h3 class="section">URL</h3>
+  <code>https://nadsapi.internal.das/api/v1.0/record_host/{view}/{domain}/{name}</code>
+  <h3 class="section">HTTP Method</h3>
+  <code>PUT</code>
+  <h3 class="section">Response Type</h3>
+  <div class="model" data-model="HostRecordItem"><a href="">HostRecordItem</a></div>
+  <h3 class="section">Parameters</h3>
+  <ul>
+	  <li class="parameter">
+      
+      
+      
+      
+      <span class="param-in">Body: </span>
+      <span class="param-name">body</span>
+      <span class="param-type">HostRecordItem(HostRecordItem)</span>
+      
+      <p class="param-description">A HostRecordItem that describes the host record to be created
+</p>
+	  </li>
+	  <li class="parameter">
+      
+      
+      <span class="param-in">Path: </span>
+      
+      
+      <span class="param-name">view</span>
+      <span class="param-type">String</span>
+      
+      <p class="param-description">Infoblox record view field</p>
+	  </li>
+	  <li class="parameter">
+      
+      
+      <span class="param-in">Path: </span>
+      
+      
+      <span class="param-name">domain</span>
+      <span class="param-type">String</span>
+      
+      <p class="param-description">Infoblox record domain field</p>
+	  </li>
+	  <li class="parameter">
+      
+      
+      <span class="param-in">Path: </span>
+      
+      
+      <span class="param-name">name</span>
+      <span class="param-type">String</span>
+      
+      <p class="param-description">Infoblox record name field</p>
+	  </li>
+  </ul>
+  <h2><a name="viewsGet"></a>viewsGet</h2>
+  <hr>
+  <p></p>
+  
+  <h3 class="section">URL</h3>
+  <code>https://nadsapi.internal.das/api/v1.0/views</code>
+  <h3 class="section">HTTP Method</h3>
+  <code>GET</code>
+  <h3 class="section">Response Type</h3>
+  <div class="model" data-model="string"><a href="">List</a></div>
+  <h3 class="section">Parameters</h3>
+  <ul>
+  </ul>
+</div>
