@@ -13,4 +13,5 @@ RUN rm /etc/nginx/conf.d/default.conf
 COPY app.conf /etc/nginx/conf.d
 
 RUN touch /usr/share/nginx/html/favicon.ico
-COPY html2/index.html /usr/share/nginx/html/index.html
+#COPY html2/docs/ /usr/share/nginx/html/
+COPY html2/index.html /usr/share/nginx/html/
