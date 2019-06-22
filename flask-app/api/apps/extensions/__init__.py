@@ -7,13 +7,12 @@ def initialize_extensions(app):
     configure_logging(app)
 
     # Flask-Restful
+    #  We can list as many of the functions that setup the endpoint
+    #    routing as we want in the endpoint_registries list
     endpoint_registries = [register_infoblox_endpoints]
     rest_api.init_app(app, endpoint_registries, http_status_codes)
 
     if app.config['ENV'] == 'production' and app.name != 'test':
-        # Flask-SSLify
-        #from api.apps.extensions.ssl import SSLify
-        #SSLify(app)
         pass
 
     return app

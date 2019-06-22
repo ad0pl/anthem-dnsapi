@@ -64,4 +64,23 @@ def json_api_success(message=None):
 
     return json_api_resp(success_json)
 
+def json_api_resp(json, code=200, headers=None):
+    """
+    Initialize Flask Response and set HTTP header Content-Type to JSON API specification requirement.
+    Arguments:
+        json (str): response payload
+    Key Word Arguments:
+        code (int): HTTP response code
+        headers (list): HTTP headers at append to response
+    Return:
+        (Flask Response)
+    """
+
+    resp = make_response(json, code)
+    resp.headers['Content-Type'] = 'application/vnd.api+json;charset=utf8'
+
+    if headers:
+        resp.headers.extend(headers)
+
+    return resp
 
