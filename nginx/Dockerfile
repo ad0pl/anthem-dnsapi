@@ -11,6 +11,8 @@ RUN rm /etc/nginx/conf.d/default.conf
 # We copy the requirements file in order to install
 # Python dependencies
 COPY app.conf /etc/nginx/conf.d
+COPY testcert.crt /etc/nginx/certs/cert.pem
+COPY testcert.key /etc/nginx/certs/cert.key
 
 RUN touch /usr/share/nginx/html/favicon.ico
 #COPY html2/docs/ /usr/share/nginx/html/
