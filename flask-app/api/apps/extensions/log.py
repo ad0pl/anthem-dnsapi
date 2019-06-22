@@ -10,7 +10,6 @@ def configure_logging(app):
     Returns:
         (None)
     """
-    # pass
     # Set base logging config based on Flask application debug mode.
     if app.debug:
         logging.basicConfig(level=logging.DEBUG)
@@ -22,10 +21,15 @@ def configure_logging(app):
 
     file_handler.setFormatter(
         logging.Formatter(
-            '%(asctime)s %(levelname)s: %(message)s '
-            '[in %(pathname)s:%(lineno)d]'
+            '%(asctime)s %(name)s %(levelname)s: %(message)s'
         )
     )
+#    file_handler.setFormatter(
+#        logging.Formatter(
+#            '%(asctime)s %(levelname)s: %(message)s '
+#            '[in %(pathname)s:%(lineno)d]'
+#        )
+#    )
 
     console = logging.StreamHandler()
 
@@ -41,5 +45,5 @@ def configure_logging(app):
     app.logger.addHandler(file_handler)
 
     app_logger = logging.getLogger('api.apps')
-    app_logger.setLevel(logging.INFO)
+    app_logger.setLevel(logging.DEBUG)
     app_logger.addHandler(file_handler)
