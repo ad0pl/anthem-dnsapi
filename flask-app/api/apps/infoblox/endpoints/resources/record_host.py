@@ -29,11 +29,62 @@ class record_host(Resource):
         args = self.reqparse.parse_args()
         self.logger.debug("post")
         auth_cookie = getattr(g, '_ibapauth', None)
+        user        = getattr(g, '_ibuser', None)
+        server      = getattr(current_app.config, 'GRID_MASTER', None)
+        domain      = getattr(current_app.config, 'DEFAULT_DOMAIN', None)
+
+
         if auth_cookie == None:
             # User wasn't authenicated or another error happened
-            ret = rest_error_response(401)
+            return rest_error_response(401)
+
+        if args.get('domain') != None:
+            domain = args.get('domain')
+
+        fqdn = ("%s.%s" % ( args.get('name'), domain)).lower()
+        view = args.get('view')
+
+        payload = {
+                'name': fqdn,
+                'view': view,
+                'comment': "host created by API",
+                'ipv4addrs': [ { 'ipv4addr': args.get('address') } ],
+                'extattrs': {
+                    'Owner': { 'value': "DNSAPI" },
+                    'change_number': { "value": args.get('change_control') },
+                    }
+                }
+        ib = infoblox_session(master = server, ipauth=auth_cookie)
+        # Check to make sure that the hostname isn't in use
+        #   Or that the address isn't in use
+        try:
+            record_host = ib.get("record:host", {'name': fqdn, 'view': view})
+            record_addr = ib.get("record:host_ipv4addr", {'ipv4addr': args.get('address'), 'network_view': "default"})
+        except infoblox.errors.BadCredentials:
+            self.logger.error("BadCredentials")
+            return rest_error_response(401)
+        except Exception as e:
+            return rest_error_response(500, details="Something happened: %s" % e.message )
         else:
-            ret = ({ }, 200)
+            if len(record_host) > 0:
+                msg = "%s/%s - DNS Record in use" % (view,fqdn)
+                self.logger.error(msg)
+                return rest_error_response(400, detail="msg")
+            if len(record_addr) > 0:
+                msg = "%s - Address in use" % (args.get('address'))
+                self.logger.error(msg)
+                return rest_error_response(400, detail="msg")
+
+        # Everything looks okay, add it in
+        record = None
+        try:
+            # The reference will have quotes around them
+            _ref = ib.addr("record:host", payload).replace('"', '')
+            ret = ib.get(_ref, {'_return_fields': "name,comment,ipv5addrs,disable,view,extattrs"})
+        except infoblox.errors.BadCredentials:
+            self.logger.error("BadCredentials")
+            return rest_error_response(401)
+        # TODO
 
         return ret
 
