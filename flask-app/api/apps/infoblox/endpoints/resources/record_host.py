@@ -27,12 +27,14 @@ class record_host(Resource):
     # Create
     def post(self):
         args = self.reqparse.parse_args()
-        self.logger.debug("post")
         auth_cookie = getattr(g, '_ibapauth', None)
         user        = getattr(g, '_ibuser', None)
         server      = getattr(current_app.config, 'GRID_MASTER', None)
         domain      = getattr(current_app.config, 'DEFAULT_DOMAIN', None)
 
+        self.logger.debug("method=post,user=%s,link=%s/%s/%s" % (
+            user, args.get('view'), args.get('domain'), args.get('domain')
+                ))
 
         if auth_cookie == None:
             # User wasn't authenicated or another error happened
@@ -126,17 +128,51 @@ class record_host(Resource):
 
     # Retrieve
     def get(self, view=None, domain=None, name=None):
-        self.logger.debug("get = %s/%s/%s" % (view,domain,name))
+        user        = getattr(g, '_ibuser', None)
         auth_cookie = getattr(g, '_ibapauth', None)
+        server      = getattr(current_app.config, 'GRID_MASTER', None)
+        link        =  url_for('by_ref', view=view, domain=domain, name=name)
+
+        self.logger.debug("method=get,user=%s,link=%s/%s/%s" % (
+            user,view,domain,name
+            ))
         if auth_cookie == None:
             self.logger.debug("No Auth cookie")
             # User wasn't authenicated or another error happened
             return rest_error_response(401)
+
+        record_host_query = {
+                'name': "%s.%s" % (name,domain),
+                'view': view,
+                '_return_fields': "name,comment,view,ipv4addrs,extattrs"
+        }
+        ib = infoblox_session(master = server, ibapauth = auth_cookie)
+
+        # TODO: At some point of time, this would be easier to do with 
+        #   field marshaling but haven't figured it out just yet
+        host = { }
+        try:
+            ret = ib.get("record:host", record_host_query)
+        except infoblox.errors.BadCredentials:
+            return rest_error_response(403)
         else:
-            self.logger.debug("Auth cookie Found")
-        return { 
-                "link": url_for('by_ref', view=view, domain=domain, name=name)
-                }, 200
+            if len(ret) == 0:
+                return rest_error_response(404)
+            elif len(ret) == 1:
+                name = ret.get('name').replace(".%s" % domain, "")
+                host = {
+                        'name': name,
+                        'domain': domain,
+                        'comment': ret.get('comment')
+                        'view': ret.get('view'),
+                        'address': ret.get('ipv4addrs')[0].get('ipv4addr'),
+                        'link': url_for('by_ref', view=view, domain=domain, name=name)
+                        }
+            else:
+                self.logger.error("more than 1 record for %s" % link)
+                return rest_error_response(400)
+
+        return host, 200
 
     # Update
     def put(self, view=None, domain=None, name=None):
