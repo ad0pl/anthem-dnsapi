@@ -64,7 +64,7 @@ class record_host(Resource):
             self.logger.error("BadCredentials")
             return rest_error_response(401)
         except Exception as e:
-            return rest_error_response(500, details="Something happened: %s" % e.message )
+            return rest_error_response(500, details="Something happened during checking existing: %s" % e.message )
         else:
             if len(record_host) > 0:
                 msg = "%s/%s - DNS Record in use" % (view,fqdn)
@@ -80,13 +80,49 @@ class record_host(Resource):
         try:
             # The reference will have quotes around them
             _ref = ib.addr("record:host", payload).replace('"', '')
-            ret = ib.get(_ref, {'_return_fields': "name,comment,ipv5addrs,disable,view,extattrs"})
+            ret = ib.get(_ref, {'_return_fields': "name,comment,ipv4addrs,disable,view,extattrs"})
         except infoblox.errors.BadCredentials:
             self.logger.error("BadCredentials")
-            return rest_error_response(401)
-        # TODO
+            return rest_error_response(403)
+        except Exception as e:
+            msg = "Unknown error: %s" % e.message
+            self.logger.error("%s, payload=%s" % ( msg, str(payload) ))
+            return rest_error_response(500, detail=msg)
+        else:
+            if isinstance(ret, list):
+                if len(ret) > 0:
+                    record = ret[0]
+                else:
+                    # No records were found
+                    self.logger.error("%s/%s - Record created but not found" % (view,fqdn))
+                    return rest_error_response(400, detail="Unknown error, record creation is undefined")
+            elif isinstance(ret, dict) and ret.get('_ref') != None:
+                record = ret
+            else:
+                self.logger.error("%s/%s - Invalid response from Infoblox: %s" % (view,fqdn,str(ret)))
+                return rest_error_response(500)
 
-        return ret
+        # We construct our successful response back to the client
+        # Use the response back from infoblox but remove out the domain
+        name = record.get('name').replace(".%s" % domain, "")
+        host = {
+                'name': name,
+                'domain': domain,
+                'comment': record.get('comment'),
+                'address': record.get('ipv4addrs')[0].get('ipv4addr'),
+                'view': record.get('view'),
+                "link": url_for('by_ref', view=view, domain=domain, name=name)
+                }
+
+        log_msg = "|".join([
+            view, domain, name,
+            record['ipv4addrs'][0]['ipv4addr'],
+            user,
+            args.get('change_control')
+            ])
+        self.logger.info("NEWHOST|%s" % log_msg)
+
+        return host, 201
 
     # Retrieve
     def get(self, view=None, domain=None, name=None):
