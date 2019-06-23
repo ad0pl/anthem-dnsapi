@@ -1,5 +1,5 @@
-from flask import g, current_app, request
-from flask_restful import abort
+from flask import g, current_app, request, abort
+#from flask_restful import abort
 from infoblox.Session import Session as infoblox_session
 import infoblox.errors
 import re
@@ -20,7 +20,7 @@ def infoblox_auth_prereq():
     if auth_cookie == None and auth_header == None:
         # No Infoblox token or Auth header
         current_app.logger.debug("No Auth")
-        abort(401)
+
     # If they have a cookie try that first before attempting
     #   the Auth header, it's MUCH faster
     if auth_cookie != None:
@@ -31,7 +31,7 @@ def infoblox_auth_prereq():
             ib = None
         except Exception as e:
             current_app.logger.error("Something bad happene: %s" % e.message)
-            abort(500)
+            #abort(500)
 
     # If the cookie wasn't there or didn't work, try the auth header
     #    if it exists
@@ -40,19 +40,25 @@ def infoblox_auth_prereq():
         try:
             ib.get("?_schema")
         except:
-            abort(401)
+            pass
 
-    if ib.session.cookies.get('ibapauth') != None:
+    if ib != None and ib.session.cookies.get('ibapauth') != None:
         auth_cookie = ib.session.cookies.get('ibapauth')
+        user = re.search(r'user=\w+', auth_cookie).group(0).split("=")[1]
+
         setattr(g, '_ibapauth', auth_cookie)
-    else:
+        setattr(g, '_ibuser', user)
+
+        current_app.logger.info("Login: user=%s" % user)
+    if ib != None and ib.session.cookies.get('ibapauth') == None:
         # Somehow Infoblox didn't return a working cookie for later
         #  We need to error out
-        abort(500)
+        #abort(500)
+        current_app.logger.error("Infoblox didn't return an auth cookie")
+        pass
+    else:
+        current_app.logger.debug("No Auth2")
 
-    user = re.search(r'user=\w+', auth_cookie).group(0).split("=")[1]
-    setattr(g, '_ibuser', user)
-    current_app.logger.info("Login: user=%s" % user)
 
 def infoblox_auth_postreq(response):
     """
@@ -63,3 +69,4 @@ def infoblox_auth_postreq(response):
         response.set_cookie('ibapauth', cookie)
     setattr(g, '_ibapauth', None)
     setattr(g, '_ibuser', None)
+    return response
