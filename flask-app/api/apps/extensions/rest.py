@@ -33,16 +33,16 @@ def rest_error_response(code, detail=None, source=None):
 
 class FlaskRestApi(object):
     """
-    Utility to mimic Flask Extension.init_app pattern while configuring customer error messages.
+    Utility to mimic Flask Extension.init_app pattern of behavior
     """
 
     def __init__(self):
         self.api = Api
 
-    def init_app(self, app, endpoint_registries):
+    def init_app(self, app, endpoint_registries, prereq=None, postreq=None):
         """
-        Initializes Flask-Restful API class with Flask application context, configures custom error messages
-        and registers API endpoints.
+        Initializes Flask-Restful API class with Flask application context, 
+          and registers API endpoints.
         Arguments:
              app (Flask instace)
              endpoint_registries (list): functions to register Resource endpoints on Api instance
@@ -55,6 +55,11 @@ class FlaskRestApi(object):
         prefix = "/api/%s" % app.config['APP_VERSION']
         app.logger.debug("App Prefix: %s" % prefix)
         rest_api = self.api(app, prefix=prefix)
+
+        if prereq != None:
+            app.before_request(prereq)
+        if postreq != None:
+            app.after_request(postreq)
 
         [endpoint_registry(rest_api) for endpoint_registry in endpoint_registries]
 
