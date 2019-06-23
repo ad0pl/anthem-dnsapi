@@ -1,5 +1,6 @@
 import logging
 from flask_restful import Resource, reqparse, abort
+from api.apps.extensions.rest import rest_error_response
 
 class record_host(Resource):
     def __init__(self):
@@ -11,12 +12,12 @@ class record_host(Resource):
     def post(self):
         args = self.reqparse.parse_args()
         self.logger.debug("post")
-        abort(400)
+        return rest_error_response(400)
 
     # Retrieve
     def get(self, view=None, domain=None, name=None):
         self.logger.debug("get = %s/%s/%s" % (view,domain,name))
-        abort(401)
+        return rest_error_response(401)
 
     # Update
     def put(self, view=None, domain=None, name=None):

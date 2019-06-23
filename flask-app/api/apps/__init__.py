@@ -6,7 +6,6 @@ from api.apps.config import (
 )
 
 from api.apps.extensions import initialize_extensions
-from api.apps.utilities.errors.error_handlers import register_error_handlers
 
 def create_app(config='develop', app_name=Config.PROJECT):
     app = Flask(app_name, static_folder=None)
@@ -15,7 +14,6 @@ def create_app(config='develop', app_name=Config.PROJECT):
     app.config.from_object(config_obj)
 
     initialize_extensions(app)
-    register_error_handlers(app)
 
     return app
 

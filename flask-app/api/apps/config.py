@@ -17,6 +17,7 @@ class Config(object):
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'SECRET_KEY_ENV_VAR_NOT_SET'
     PROJECT = "anthem-dnspai"
     BASE_DIR = basedir
+    APP_VERSION = os.environ.get('APP_VERSION') or "v0.9"
 
 class DevelopmentConfig(Config):
     # Flask
