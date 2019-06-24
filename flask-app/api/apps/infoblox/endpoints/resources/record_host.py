@@ -58,7 +58,7 @@ class record_host(Resource):
                     'change_number': { "value": args.get('change_control') },
                     }
                 }
-        ib = infoblox_session(master = server, ipauth=auth_cookie)
+        ib = infoblox_session(master = server, ibapauth=auth_cookie)
         # Check to make sure that the hostname isn't in use
         #   Or that the address isn't in use
         try:
@@ -161,13 +161,14 @@ class record_host(Resource):
             if len(ret) == 0:
                 return rest_error_response(404)
             elif len(ret) == 1:
-                name = ret.get('name').replace(".%s" % domain, "")
+                record = ret[0]
+                name = record.get('name').replace(".%s" % domain, "")
                 host = {
                         'name': name,
                         'domain': domain,
-                        'comment': ret.get('comment'),
-                        'view': ret.get('view'),
-                        'address': ret.get('ipv4addrs')[0].get('ipv4addr'),
+                        'comment': record.get('comment'),
+                        'view': record.get('view'),
+                        'address': record.get('ipv4addrs')[0].get('ipv4addr'),
                         'link': url_for('by_ref', view=view, domain=domain, name=name)
                         }
             else:
@@ -318,6 +319,7 @@ class record_host(Resource):
 
     # Delete
     def delete(self, view=None, domain=None, name=None):
+        args = self.delparse.parse_args()
         auth_cookie = getattr(g, '_ibapauth', None)
         user        = getattr(g, '_ibuser', None)
         server      = current_app.config.get('GRID_MASTER')
