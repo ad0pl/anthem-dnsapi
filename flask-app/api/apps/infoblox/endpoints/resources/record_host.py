@@ -83,7 +83,7 @@ class record_host(Resource):
         record = None
         try:
             # The reference will have quotes around them
-            _ref = ib.addr("record:host", payload).replace('"', '')
+            _ref = ib.add("record:host", payload).replace('"', '')
             ret = ib.get(_ref, {'_return_fields': "name,comment,ipv4addrs,disable,view,extattrs"})
         except infoblox.errors.BadCredentials:
             self.logger.error("BadCredentials")
