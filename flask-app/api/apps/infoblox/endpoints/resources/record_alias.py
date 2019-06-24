@@ -6,6 +6,9 @@ from infoblox.Session import Session as infoblox_session
 import infoblox.errors
 
 class record_alias(Resource):
+    """
+    record_alias Resource class
+    """
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
         self.reqparse.add_argument('name', type = str, required = True,
@@ -67,7 +70,7 @@ class record_alias(Resource):
             self.logger.error("BadCredentials")
             return rest_error_response(401)
         except Exception as e:
-            return rest_error_response(500, details="Something happened during checking existing: %s" % e.message )
+            return rest_error_response(500, details="Something happened during checking existing: %s" % str(e) )
         else:
             if len(record_cname) > 0:
                 msg = "%s/%s - DNS Record in use" % (view,fqdn)
@@ -83,7 +86,7 @@ class record_alias(Resource):
             self.logger.error("BadCredentials")
             return rest_error_response(403)
         except Exception as e:
-            msg = "Unknown error: %s" % e.message
+            msg = "Unknown error: %s" % str(e)
             self.logger.error("%s, payload=%s" % ( msg, str(payload) ))
             return rest_error_response(500, detail=msg)
         else:
@@ -176,7 +179,6 @@ class record_alias(Resource):
         user        = getattr(g, '_ibuser', None)
         auth_cookie = getattr(g, '_ibapauth', None)
         server      = current_app.config.get('GRID_MASTER')
-        link        =  url_for('alias_by_ref', view=view, domain=domain, name=name)
 
         self.logger.debug("method=put,user=%s,link=%s/%s/%s" % (
             user, view, domain, name
@@ -205,23 +207,31 @@ class record_alias(Resource):
         src_fqdn = ("%s.%s" % ( name, domain)).lower()
         new_fqdn = ("%s.%s" % ( new_name, new_domain)).lower()
         new_link = url_for('alias_by_ref', view=view, domain=new_domain, name=new_name)
+        dst_query_type = None
+        dst_query = None
         if src_fqdn == new_fqdn:
             # The old name and the new name match so it's a re-target oper.
+            #   We don't need to validate anything about the target like we do with
+            #   the address for host objects
             self.logger.debug("re-target %s => %s" % (new_link, args.get('canonical')))
             # TODO
         else:
             # The names mis-match so we're just going to ass it's a re-naming
-            # TODO: We don't need to validate anything about the target
-            pass
+            #   We need to verify the new name isn't there
+            dst_query_type = "record:cname"
+            dst_query = { 'name': new_fqdn, 'view': view }
 
         ib = infoblox_session(master=server, ibapauth=auth_cookie)
         src_query = {
                 'name': src_fqdn, 'view': view,
                 '_return_fields': "name,canonical,extattrs"
                 }
+        ## Verify record consistantly
         record = None
         try:
             src_resp = ib.get("record:cname", src_query)
+            if dst_query_type != None:
+              dst_resp = ib.get(dst_query_type, dst_query)
         except infoblox.errors.BadCredentials:
             return rest_error_response(403)
         except Exception as e:
@@ -241,8 +251,155 @@ class record_alias(Resource):
             else:
                 return rest_error_response(400, detail="Unknown return type")
 
+            # If we have a dst to query for check to make sure nothing was returned
+            if dst_query_type != None:
+                if isinstance(dst_resp, list):
+                    if len(dst_resp) > 0:
+                        msg = "Destination in use"
+                        self.logger.error(msg)
+                        return rest_error_response(400, detail=msg)
+                elif isinstance(dest_rep, dict):
+                    # we got back just a diction, check if there's a _ref
+                    #  attribute in the response, that'll tell us if it's empty
+                    #  or not
+                    if dst_resp.get('_ref') != None:
+                        msg = "Destination in use"
+                        self.logger.error(msg)
+                        return rest_error_response(400, detail=msg)
+
+        ## Verify if it's permitted to modify the record
+        if record.get('extattrs') != None and record['extattrs'].get('Owner') != None and record['extattrs']['Owner']['value'] == "DNSAPI":
+            # We are good!
+            pass
+        else:
+            msg = "Object not tagged for modification"
+            self.logger.error(msg)
+            return rest_error_response(403, detail=msg)
+
+        payload = {
+                'name': new_fqdn,
+                'view': view,
+                'comment': "host updated by API",
+                'extattrs': {
+                    'Owner': { 'value': "DNSAPI" },
+                    'change_number': { 'value': args.get('change_control') }
+                    }
+                }
+        if args.get('canonical') != None:
+            payload['canonical'] = args.get('canonical')
+
+        try:
+            ib.update(record.get('_ref'), payload)
+        except Exception as e:
+            msg = "Error updating record %s: %s" % (new_fqdn, str(e))
+            self.logger.error(msg)
+            return rest_error_response(400, detail=msg)
+
+        host = {
+                'name': new_name,
+                'domain': new_domain,
+                'view': view,
+                'change_control': args.get('change_control'),
+                'canonical': args.get('canonical'),
+                'link': new_link
+                }
+
+        log_msg = "|".join([
+            view, domain, name, record.get('canonical'),
+            view, new_domain, new_name,
+            "%s" % args.get('canonical'), 
+            user, args.get('change_control')
+            ])
+        self.logger.info("UPDATEALIAS|%s" % log_msg)
+
+        return host, 200
+
 
 
     # Delete
-    def put(self, view=None, domain=None, name=None):
-        pass
+    def delete(self, view=None, domain=None, name=None):
+        args = self.delparse.parse_args()
+        auth_cookie = getattr(g, '_ibapauth', None)
+        user        = getattr(g, '_ibuser', None)
+        server      = current_app.config.get('GRID_MASTER')
+
+        self.logger.debug("method=delete,user=%s,link=%s/%s/%s" % (
+            user, view, domain, name
+        ))
+
+        if auth_cookie == None:
+            # User wasn't authenicated or another error happened
+            return rest_error_response(401)
+
+        ib = infoblox_session(master=server, ibapauth=auth_cookie)
+        payload = {
+                'name': "%s.%s" % (name, domain),
+                'view': view,
+                '_return_fields': 'name,canonical,extattrs'
+                }
+        record = None
+        try:
+            ret = ib.get("record:cname", payload)
+        except infoblox.errors.BadCredentials:
+            return rest_error_response(403)
+        except Exception as e:
+            self.logger.error("Error logging for record %s/%s/%s: %s" % (
+                view, domain, name, str(e)
+                ))
+            return rest_error_response(500, detail="Unknown Error: %s" % str(e))
+        else:
+            if isinstance(ret, list):
+                if len(ret) > 0:
+                    record = ret[0]
+                else:
+                    # No record was found
+                    msg = "%s/%s/%s Not found"
+                    self.logger.error(msg)
+                    return rest_error_response(404, detail=msg)
+            elif isinstance(ret, dict):
+                if ret.get('_ref') == None:
+                    # No record was found
+                    msg = "%s/%s/%s Not found"
+                    self.logger.error(msg)
+                    return rest_error_response(404, detail=msg)
+                else:
+                    record = ret
+            else:
+                msg = "%s/%s/%s Unknown return type: %s" % (
+                        view, domain, name, type(ret)
+                        )
+                self.logger.error(msg)
+                return rest_error_response(500, detail=msg)
+        # Check to see if we are permitted to delete this
+        if record.get('extattrs') != None and record['extattrs'].get('Owner') != None and record['extattrs']['Owner']['value'] == "DNSAPI":
+            pass
+        else:
+            msg = "%s/%s/%s - record not tagged for permission" % (
+                    view, domain, name
+                    )
+            self.logger.error(msg)
+            return rest_error_response(403, detail=msg)
+
+        try:
+            ib.delete( record.get('_ref') )
+        except Exception as e:
+            msg = "%s/%s/%s - Error deleting record: %s" % (
+                    view, domain, name, str(e)
+                    )
+            self.logger.error(msg)
+            return rest_error_response(500, detail=msg)
+
+        link = url_for('by_ref', view=view, domain=domain, name=name)
+        response = {
+                'name': name,
+                'domain': domain,
+                'view': view,
+                'comment': record.get('comment'),
+                'canonical' : record.get('canonical'),
+                'link': link
+                }
+
+        log_msg = "|".join([view,domain,name,user,args['change_control']])
+        self.logger.info("DELETEALIAS|%s" % log_msg)
+        return response, 200
+
