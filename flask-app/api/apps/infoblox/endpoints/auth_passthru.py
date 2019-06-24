@@ -1,8 +1,11 @@
+import logging
 from flask import g, current_app, request, abort
 #from flask_restful import abort
 from infoblox.Session import Session as infoblox_session
 import infoblox.errors
 import re
+
+logger = logging.getLogger(__name__)
 
 def infoblox_auth_prereq():
     """
@@ -14,23 +17,24 @@ def infoblox_auth_prereq():
     """
     auth_cookie = request.cookies.get('ibapauth')
     auth_header = request.headers.get('Authorization')
-    server = getattr(current_app.config, 'GRID_MASTER', None)
+    server      = current_app.config.get('GRID_MASTER')
     ib = None
 
     if auth_cookie == None and auth_header == None:
         # No Infoblox token or Auth header
-        current_app.logger.debug("No Auth")
+        logger.debug("No Auth")
 
     # If they have a cookie try that first before attempting
     #   the Auth header, it's MUCH faster
     if auth_cookie != None:
         ib = infoblox_session ( master = server, ipauth = auth_cookie )
         try:
+            logger.debug("Attemping using a cookie")
             ib.get("?_schema")
         except infoblox.errors.BadCredentials:
             ib = None
         except Exception as e:
-            current_app.logger.error("Something bad happene: %s" % e.message)
+            logger.error("Something bad happene: %s" % e.message)
             #abort(500)
 
     # If the cookie wasn't there or didn't work, try the auth header
@@ -38,6 +42,7 @@ def infoblox_auth_prereq():
     if ib == None and auth_header != None:
         ib = infoblox_session ( master = server, auth_header = auth_header )
         try:
+            logger.debug("Attemping using a Auth header")
             ib.get("?_schema")
         except:
             pass
@@ -49,15 +54,15 @@ def infoblox_auth_prereq():
         setattr(g, '_ibapauth', auth_cookie)
         setattr(g, '_ibuser', user)
 
-        current_app.logger.info("Login: user=%s" % user)
+        logger.info("Login: user=%s" % user)
     if ib != None and ib.session.cookies.get('ibapauth') == None:
         # Somehow Infoblox didn't return a working cookie for later
         #  We need to error out
         #abort(500)
-        current_app.logger.error("Infoblox didn't return an auth cookie")
+        logger.error("Infoblox didn't return an auth cookie")
         pass
     else:
-        current_app.logger.debug("No Auth2")
+        logger.debug("No Auth2")
 
 
 def infoblox_auth_postreq(response):
