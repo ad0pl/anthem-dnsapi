@@ -6,23 +6,24 @@ from infoblox.Session import Session as infoblox_session
 import infoblox.errors
 
 class record_alias(Resource):
+    def __init__(self):
         self.reqparse = reqparse.RequestParser()
         self.reqparse.add_argument('name', type = str, required = True,
-                help = 'No Hostname provided', location = 'json')
+        help = 'No Hostname provided', location = 'json')
         self.reqparse.add_argument('view', type = str, required = True,
-                help = 'No view provided', location = ['json', 'values'])
+            help = 'No view provided', location = ['json', 'values'])
         self.reqparse.add_argument('canonical', type = str, required = True,
-                help = 'No Canonical provided', location = 'json')
+            help = 'No Canonical provided', location = 'json')
         self.reqparse.add_argument('change_control', type = str, required = True,
-                help = 'No change_control provided', location = 'json')
+            help = 'No change_control provided', location = 'json')
         self.reqparse.add_argument('domain', type = str, location = 'json')
 
         # Delete only really requires that we have change control
         self.delparse = reqparse.RequestParser()
         self.delparse.add_argument('change_control', type = str, required = True,
-                help = 'No change_control provided', location = 'json')
+            help = 'No change_control provided', location = 'json')
 
-        super(record_host, self).__init__()
+        super(record_alias, self).__init__()
         self.logger = logging.getLogger(__name__)
 
     # Create
@@ -57,7 +58,7 @@ class record_alias(Resource):
                     'change_number': { "value": args.get('change_control') },
                     }
                 }
-        ib = infoblox_session(master = server, ipauth=auth_cookie)
+        ib = infoblox_session(master = server, ibapauth=auth_cookie)
         # Check to make sure that the hostname isn't in use
         try:
             # We really need to check for ANY record types
@@ -108,12 +109,12 @@ class record_alias(Resource):
                 'comment': record.get('comment'),
                 'canonical': record.get('canonical'),
                 'view': record.get('view'),
-                "link": url_for('by_ref', view=view, domain=domain, name=name)
+                "link": url_for('alias_by_ref', view=view, domain=domain, name=name)
                 }
         
         log_msg = "|".join([
             view, domain, name,
-            record.get('canonical')
+            record.get('canonical'),
             user,
             args.get('change_control')
             ])
@@ -126,7 +127,7 @@ class record_alias(Resource):
         user        = getattr(g, '_ibuser', None)
         auth_cookie = getattr(g, '_ibapauth', None)
         server      = current_app.config.get('GRID_MASTER')
-        link        =  url_for('by_ref', view=view, domain=domain, name=name)
+        link        =  url_for('alias_by_ref', view=view, domain=domain, name=name)
 
         self.logger.debug("method=get,user=%s,link=%s/%s/%s" % (
             user,view,domain,name
@@ -153,14 +154,15 @@ class record_alias(Resource):
             if len(ret) == 0:
                 return rest_error_response(404)
             elif len(ret) == 1:
-                name = ret.get('name').replace(".%s" % domain, "")
+                record = ret[0]
+                name = record.get('name').replace(".%s" % domain, "")
                 response = {
                         'name': name,
                         'domain': domain,
-                        'comment': ret.get('comment'),
-                        'view': ret.get('view'),
-                        'canonical': ret.get('canonical')
-                        'link': url_for('by_ref', view=view, domain=domain, name=name)
+                        'comment': record.get('comment'),
+                        'view': record.get('view'),
+                        'canonical': record.get('canonical'),
+                        'link': link
                         }
             else:
                 self.logger.error("more than 1 record for %s" % link)
@@ -170,7 +172,76 @@ class record_alias(Resource):
 
     # Update
     def put(self, view=None, domain=None, name=None):
-        pass
+        args        = self.reqparse.parse_args()
+        user        = getattr(g, '_ibuser', None)
+        auth_cookie = getattr(g, '_ibapauth', None)
+        server      = current_app.config.get('GRID_MASTER')
+        link        =  url_for('alias_by_ref', view=view, domain=domain, name=name)
+
+        self.logger.debug("method=put,user=%s,link=%s/%s/%s" % (
+            user, view, domain, name
+                ))
+        if auth_cookie == None:
+            # User wasn't authenicated or another error happened
+            return rest_error_response(401)
+
+        # Verify the view in the path and the view in the passed data
+        #   match
+        new_view = view
+        if args.get('view') != view:
+            self.logger.error("Views don't match: (%s / %s)" % ( view, args.get('view')))
+            return rest_error_response(400, detail="Mismatching views")
+
+        # The "new" object can't already exist, so we need to determine
+        #   if this is a re-name (new name can't exist) or a re-targeting
+        new_domain = domain.lower() # Domain from the URL path
+        new_name   = name.lower()   # hostname from the URL path
+        if args.get('domain') != None:
+            # They passed the domain in the data
+            new_domain = args.get('domain').lower()
+        if args.get('name') != None:
+            new_name = args.get('name').lower()
+
+        src_fqdn = ("%s.%s" % ( name, domain)).lower()
+        new_fqdn = ("%s.%s" % ( new_name, new_domain)).lower()
+        new_link = url_for('alias_by_ref', view=view, domain=new_domain, name=new_name)
+        if src_fqdn == new_fqdn:
+            # The old name and the new name match so it's a re-target oper.
+            self.logger.debug("re-target %s => %s" % (new_link, args.get('canonical')))
+            # TODO
+        else:
+            # The names mis-match so we're just going to ass it's a re-naming
+            # TODO: We don't need to validate anything about the target
+            pass
+
+        ib = infoblox_session(master=server, ibapauth=auth_cookie)
+        src_query = {
+                'name': src_fqdn, 'view': view,
+                '_return_fields': "name,canonical,extattrs"
+                }
+        record = None
+        try:
+            src_resp = ib.get("record:cname", src_query)
+        except infoblox.errors.BadCredentials:
+            return rest_error_response(403)
+        except Exception as e:
+            self.logger.error("Unknown error looking for existing records: %s" % str(e))
+            return rest_error_response(500, detail="Unknown error: %s" % str(e))
+        else:
+            # If we get an empty response for src_query throw a NOTFOUND error
+            if isinstance(src_resp, list):
+                if len(src_resp) > 0:
+                    record = src_resp[0]
+                else:
+                    # No records were found
+                    self.logger.error("Modify can't find src object: %s/%s" % (view, src_fqdn))
+                    return rest_error_response(404, detail="%s/%s%s not found" % (view,domain,name))
+            elif isinstance(src_resp, dict) and src_resp.get('_ref') != None:
+                record = src_resp
+            else:
+                return rest_error_response(400, detail="Unknown return type")
+
+
 
     # Delete
     def put(self, view=None, domain=None, name=None):
