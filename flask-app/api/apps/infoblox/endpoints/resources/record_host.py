@@ -73,11 +73,11 @@ class record_host(Resource):
             if len(record_host) > 0:
                 msg = "%s/%s - DNS Record in use" % (view,fqdn)
                 self.logger.error(msg)
-                return rest_error_response(400, detail="msg")
+                return rest_error_response(400, detail=msg)
             if len(record_addr) > 0:
                 msg = "%s - Address in use" % (args.get('address'))
                 self.logger.error(msg)
-                return rest_error_response(400, detail="msg")
+                return rest_error_response(400, detail=msg)
 
         # Everything looks okay, add it in
         record = None
