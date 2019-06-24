@@ -27,14 +27,18 @@ def infoblox_auth_prereq():
     # If they have a cookie try that first before attempting
     #   the Auth header, it's MUCH faster
     if auth_cookie != None:
-        ib = infoblox_session ( master = server, ipauth = auth_cookie )
+        ib = infoblox_session ( master = server, ibapauth = auth_cookie )
         try:
             logger.debug("Attemping using a cookie")
             ib.get("?_schema")
         except infoblox.errors.BadCredentials:
+            logger.debug("Cookie attempt failed with unauthorized")
             ib = None
+            auth_cookie = None
         except Exception as e:
-            logger.error("Something bad happene: %s" % e.message)
+            logger.error("Something bad happene: %s" % str(e))
+            ib = None
+            auth_cookie = None
             #abort(500)
 
     # If the cookie wasn't there or didn't work, try the auth header
@@ -45,17 +49,22 @@ def infoblox_auth_prereq():
             logger.debug("Attemping using a Auth header")
             ib.get("?_schema")
         except:
-            pass
+            logger.debug("Auth header attempt failed with unauthorized")
+            ib = None
+            auth_cookie = None
+        else:
+            logger.debug("Auth header success extracting cookie for future")
+            logger.debug(ib.session.cookies)
+            auth_cookie = ib.session.cookies.get('ibapauth', domain=server)
 
-    if ib != None and ib.session.cookies.get('ibapauth') != None:
-        auth_cookie = ib.session.cookies.get('ibapauth')
+    if ib != None and auth_cookie != None:
         user = re.search(r'user=\w+', auth_cookie).group(0).split("=")[1]
 
         setattr(g, '_ibapauth', auth_cookie)
         setattr(g, '_ibuser', user)
 
         logger.info("Login: user=%s" % user)
-    if ib != None and ib.session.cookies.get('ibapauth') == None:
+    if ib != None and ib.session.cookies.get('ibapauth', domain=server) == None:
         # Somehow Infoblox didn't return a working cookie for later
         #  We need to error out
         #abort(500)
