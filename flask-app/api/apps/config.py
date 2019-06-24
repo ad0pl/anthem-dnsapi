@@ -18,6 +18,8 @@ class Config(object):
     PROJECT = "anthem-dnspai"
     BASE_DIR = basedir
     APP_VERSION = os.environ.get('APP_VERSION') or "v0.9"
+    DEFAULT_DOMAIN = os.environ.get('DEFAULT_DOMAIN') or "internal.das"
+    GRID_MASTER = os.environ.get('GRID_MASTER') or "ipam"
 
 class DevelopmentConfig(Config):
     # Flask
