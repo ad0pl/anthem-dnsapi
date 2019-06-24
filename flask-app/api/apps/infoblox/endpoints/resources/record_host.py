@@ -163,7 +163,7 @@ class record_host(Resource):
                 host = {
                         'name': name,
                         'domain': domain,
-                        'comment': ret.get('comment')
+                        'comment': ret.get('comment'),
                         'view': ret.get('view'),
                         'address': ret.get('ipv4addrs')[0].get('ipv4addr'),
                         'link': url_for('by_ref', view=view, domain=domain, name=name)
@@ -176,14 +176,144 @@ class record_host(Resource):
 
     # Update
     def put(self, view=None, domain=None, name=None):
-        self.logger.debug("put = %s/%s/%s" % (view,domain,name))
+        args = self.reqparse.parse_args()
         auth_cookie = getattr(g, '_ibapauth', None)
+        user        = getattr(g, '_ibuser', None)
+        server      = getattr(current_app.config, 'GRID_MASTER', None)
+
+        self.logger.debug("method=put,user=%s,link=%s/%s/%s" % (
+            user, view, domain, name
+                ))
+
         if auth_cookie == None:
             # User wasn't authenicated or another error happened
             ret = rest_error_response(401)
+
+        # Verify the view in the path and the view in the passed data
+        #   match
+        new_view = view
+        if args.get('view') != view:
+            self.logger.error("Views don't match: (%s / %s)" % ( view, args.get('view')))
+            return rest_error_response(400, detail="Mismatching views")
+
+        # The "new" object can't already exist, so we need to determine
+        #   if this is a re-name (new name can't exist) or a re-address
+        #   (the new address can't be allocated)
+        new_domain = domain.lower() # Domain from the URL path
+        new_name   = name.lower()   # hostname from the URL path
+        if args.get('domain') != None:
+            # They passed the domain in the data
+            new_domain = args.get('domain').lower()
+        if args.get('name') != None:
+            new_name = args.get('name').lower()
+
+        src_fqdn = ("%s.%s" % ( name, domain)).lower()
+        new_fqdn = ("%s.%s" % ( new_name, new_domain)).lower()
+        new_link = url_for('by_ref', view=view, domain=new_domain, name=new_name)
+        if src_fqdn == new_fqdn:
+            # The old name and the new name match so it's a re-address oper.
+            self.logger.debug("re-address %s => %s" % (new_link, args.get('address')))
+            dest_query_type = "record:host_ipv4addr"
+            dest_query = {'ipv4addr': args.get('address'),
+                    'network_view': "default" 
+                    }
         else:
-            ret = ({ }, 200)
-        return ret
+            # The names mis-match so we're just going to assume it's a re-name
+            self.logger.debug("re-name %s/%s => %s" % (
+                view, old_fqdn, new_fqdn))
+            dest_query_type = "record:host"
+            dest_query = {'name': new_fqdn, 'view': view}
+
+        ib = infoblox_session(master=server, ibapauth=auth_cookie)
+        src_query = {
+                'name': src_fqdn, 'view': view,
+                '_return_fields': "name,ipv4addrs,extattrs"
+                }
+        record = None
+        try:
+            src_resp = ib.get("record:host", src_query)
+            dst_resp = ib.get(dest_query_type, dest_query)
+        except infoblox.errors.BadCredentials:
+            return rest_error_response(403)
+        except Exception as e:
+            self.logger.error("Unknown error looking for existing records: %s" % e.message)
+            return rest_error_response(500, detail="Unknown error: %s" % e.message)
+        else:
+            # If we get an empty response for src_query throw a NOTFOUND error
+            if isinstance(src_resp, list):
+                if len(src_resp) > 0:
+                    record = src_resp[0]
+                else:
+                    # No records were found
+                    self.logger.error("Modify can't find src object: %s/%s" % (view, src_fqdn))
+                    return rest_error_response(404, detail="%s/%s%s not found" % (view,domain,name))
+            elif isinstance(src_resp, dict) and src_resp.get('_ref') != None:
+                record = src_resp
+            else:
+                return rest_error_response(400, detail="Unknown return type")
+
+            # We want an emtpy response for dest_query
+            if isinstance(dst_resp, list):
+                if len(dst_resp) > 0:
+                    msg = "Destination in use"
+                    self.logger.error(msg)
+                    return rest_error_response(400, detail=msg)
+            elif isinstance(dest_rep, dict):
+                # we got back just a diction, check if there's a _ref
+                #  attribute in the response, that'll tell us if it's empty
+                #  or not
+                if dst_resp.get('_ref') != None:
+                    msg = "Destination in use"
+                    self.logger.error(msg)
+                    return rest_error_response(400, detail=msg)
+
+        # Destination is clear
+        # Check to see if we are permitted to touch the src
+        if record.get('extattrs') != None and record['extattrs'].get('Owner') != None and record['extattrs']['Owner']['value'] == "DNSAPI":
+            # We are good!
+            pass
+        else:
+            msg = "Object not tagged for modification"
+            self.logger.error(msg)
+            return rest_error_response(403, detail=msg)
+
+        payload = {
+                'name': new_fqdn,
+                'view': view,
+                'comment': "host updated by API",
+                'extattrs': {
+                    'Owner': { 'value': "DNSAPI" },
+                    'change_number': { 'value': args.get('change_control') }
+                    }
+                }
+        if args.get('address') != None:
+            payload['ipv4addrs'] = [ {'ipv4addr': args.get('address') } ]
+
+        try:
+            ib.update(record.get('_ref'), payload)
+        except Exception as e:
+            msg = "Error updating record %s: %s" % (new_fqdn, e.message)
+            self.logger.error(msg)
+            return rest_error_response(400, detail=msg)
+
+        host = {
+                'name': new_name,
+                'domain': new_domain,
+                'view': view,
+                'change_control': args.get('change_control'),
+                'address': args.get('address'),
+                'link': new_link
+                }
+
+        log_msg = "|".join([
+            view, domain, name, record['ipv4addrs'][0]['ipv4addr'],
+            view, new_domain, new_name,
+            "%s" % payload.get('ipv4addrs'), 
+            user, args['change_control']
+            ])
+        self.logger.info("UPDATEHOST|%s" % log_msg)
+
+        return host, 200
 
     # Delete
     def delete(self, view=None, domain=None, name=None):
