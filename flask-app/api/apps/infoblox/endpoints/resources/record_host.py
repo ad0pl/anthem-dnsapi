@@ -2,6 +2,8 @@ import logging
 from flask import g, current_app, url_for
 from flask_restful import Resource, reqparse, abort
 from api.apps.extensions.rest import rest_error_response
+from infoblox.Session import Session as infoblox_session
+import infoblox.errors
 
 class record_host(Resource):
     def __init__(self):
@@ -29,8 +31,8 @@ class record_host(Resource):
         args = self.reqparse.parse_args()
         auth_cookie = getattr(g, '_ibapauth', None)
         user        = getattr(g, '_ibuser', None)
-        server      = getattr(current_app.config, 'GRID_MASTER', None)
-        domain      = getattr(current_app.config, 'DEFAULT_DOMAIN', None)
+        server      = current_app.config.get('GRID_MASTER')
+        domain      = current_app.config.get('DEFAULT_DOMAIN')
 
         self.logger.debug("method=post,user=%s,link=%s/%s/%s" % (
             user, args.get('view'), args.get('domain'), args.get('domain')
@@ -130,7 +132,7 @@ class record_host(Resource):
     def get(self, view=None, domain=None, name=None):
         user        = getattr(g, '_ibuser', None)
         auth_cookie = getattr(g, '_ibapauth', None)
-        server      = getattr(current_app.config, 'GRID_MASTER', None)
+        server      = current_app.config.get('GRID_MASTER')
         link        =  url_for('by_ref', view=view, domain=domain, name=name)
 
         self.logger.debug("method=get,user=%s,link=%s/%s/%s" % (
@@ -179,15 +181,14 @@ class record_host(Resource):
         args = self.reqparse.parse_args()
         auth_cookie = getattr(g, '_ibapauth', None)
         user        = getattr(g, '_ibuser', None)
-        server      = getattr(current_app.config, 'GRID_MASTER', None)
+        server      = current_app.config.get('GRID_MASTER')
 
         self.logger.debug("method=put,user=%s,link=%s/%s/%s" % (
             user, view, domain, name
                 ))
-
         if auth_cookie == None:
             # User wasn't authenicated or another error happened
-            ret = rest_error_response(401)
+            return rest_error_response(401)
 
         # Verify the view in the path and the view in the passed data
         #   match
@@ -220,7 +221,7 @@ class record_host(Resource):
         else:
             # The names mis-match so we're just going to assume it's a re-name
             self.logger.debug("re-name %s/%s => %s" % (
-                view, old_fqdn, new_fqdn))
+                view, src_fqdn, new_fqdn))
             dest_query_type = "record:host"
             dest_query = {'name': new_fqdn, 'view': view}
 
@@ -236,8 +237,8 @@ class record_host(Resource):
         except infoblox.errors.BadCredentials:
             return rest_error_response(403)
         except Exception as e:
-            self.logger.error("Unknown error looking for existing records: %s" % e.message)
-            return rest_error_response(500, detail="Unknown error: %s" % e.message)
+            self.logger.error("Unknown error looking for existing records: %s" % str(e))
+            return rest_error_response(500, detail="Unknown error: %s" % str(e))
         else:
             # If we get an empty response for src_query throw a NOTFOUND error
             if isinstance(src_resp, list):
@@ -317,11 +318,86 @@ class record_host(Resource):
 
     # Delete
     def delete(self, view=None, domain=None, name=None):
-        self.logger.debug("delete = %s/%s/%s" % (view,domain,name))
         auth_cookie = getattr(g, '_ibapauth', None)
+        user        = getattr(g, '_ibuser', None)
+        server      = current_app.config.get('GRID_MASTER')
+
+        self.logger.debug("method=delete,user=%s,link=%s/%s/%s" % (
+            user, view, domain, name
+        ))
+
         if auth_cookie == None:
             # User wasn't authenicated or another error happened
-            ret = rest_error_response(401)
+            return rest_error_response(401)
+
+        ib = infoblox_session(master=server, ibapauth=auth_cookie)
+        payload = {
+                'name': "%s.%s" % (name, domain),
+                'view': view,
+                '_return_fields': 'name,ipv4addrs,extattrs'
+                }
+        record = None
+        try:
+            ret = ib.get("record:host", payload)
+        except infoblox.errors.BadCredentials:
+            return rest_error_response(403)
+        except Exception as e:
+            self.logger.error("Error logging for record %s/%s/%s: %s" % (
+                view, domain, name, str(e)
+                ))
+            return rest_error_response(500, detail="Unknown Error: %s" % str(e))
         else:
-            ret = ({ }, 200)
-        return ret
+            if isinstance(ret, list):
+                if len(ret) > 0:
+                    record = ret[0]
+                else:
+                    # No record was found
+                    msg = "%s/%s/%s Not found"
+                    self.logger.error(msg)
+                    return rest_error_response(404, detail=msg)
+            elif isinstance(ret, dict):
+                if ret.get('_ref') == None:
+                    # No record was found
+                    msg = "%s/%s/%s Not found"
+                    self.logger.error(msg)
+                    return rest_error_response(404, detail=msg)
+                else:
+                    record = ret
+            else:
+                msg = "%s/%s/%s Unknown return type: %s" % (
+                        view, domain, name, type(ret)
+                        )
+                self.logger.error(msg)
+                return rest_error_response(500, detail=msg)
+        # Check to see if we are permitted to delete this
+        if record.get('extattrs') != None and record['extattrs'].get('Owner') != None and record['extattrs']['Owner']['value'] == "DNSAPI":
+            pass
+        else:
+            msg = "%s/%s/%s - record not tagged for permission" % (
+                    view, domain, name
+                    )
+            self.logger.error(msg)
+            return rest_error_response(403, detail=msg)
+
+        try:
+            ib.delete( record.get('_ref') )
+        except Exception as e:
+            msg = "%s/%s/%s - Error deleting record: %s" % (
+                    view, domain, name, str(e)
+                    )
+            self.logger.error(msg)
+            return rest_error_response(500, detail=msg)
+
+        link = url_for('by_ref', view=view, domain=domain, name=name)
+        host = {
+                'name': name,
+                'domain': domain,
+                'view': view,
+                'comment': record.get('comment'),
+                'address' : record.get('ipv4addrs')[0]['ipv4addr'],
+                'link': link
+                }
+
+        log_msg = "|".join([view,domain,name,user,args['change_control']])
+        self.logger.info("DELETEHOST|%s" % log_msg)
+        return host, 200
