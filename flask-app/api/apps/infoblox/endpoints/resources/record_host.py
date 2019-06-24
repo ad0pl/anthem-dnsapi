@@ -68,7 +68,7 @@ class record_host(Resource):
             self.logger.error("BadCredentials")
             return rest_error_response(401)
         except Exception as e:
-            return rest_error_response(500, details="Something happened during checking existing: %s" % e.message )
+            return rest_error_response(500, details="Something happened during checking existing: %s" % str(e) )
         else:
             if len(record_host) > 0:
                 msg = "%s/%s - DNS Record in use" % (view,fqdn)
@@ -89,7 +89,7 @@ class record_host(Resource):
             self.logger.error("BadCredentials")
             return rest_error_response(403)
         except Exception as e:
-            msg = "Unknown error: %s" % e.message
+            msg = "Unknown error: %s" % str(e)
             self.logger.error("%s, payload=%s" % ( msg, str(payload) ))
             return rest_error_response(500, detail=msg)
         else:
@@ -294,7 +294,7 @@ class record_host(Resource):
         try:
             ib.update(record.get('_ref'), payload)
         except Exception as e:
-            msg = "Error updating record %s: %s" % (new_fqdn, e.message)
+            msg = "Error updating record %s: %s" % (new_fqdn, str(e))
             self.logger.error(msg)
             return rest_error_response(400, detail=msg)
 
