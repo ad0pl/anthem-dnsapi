@@ -183,6 +183,8 @@ class record_a(Resource):
             self.logger.error("Views don't match: (%s / %s)" % ( view, args.get('view')))
             return rest_error_response(400, detail="Mismatching views")
 
+        ib = infoblox_session(master = server, ibapauth=auth_cookie)
+
         # Check to see if this is a rename operation
         src_name = ("%s.%s" % ( name, domain )).lower()
         dst_name = ("%s.%s" % ( args.get('name'), args.get('domain') )).lower()
@@ -192,6 +194,8 @@ class record_a(Resource):
                 dst_check = ib.get("record:a", { 'view': view, 'name': dst_name })
             except Exception as e:
                 msg = "Error checking to see if new name exists:%s:%s" % ( dst_name, str(e) )
+                self.logger.error(msg)
+                return rest_error_response(400, detail=msg)
             else:
                 if len(dst_check) > 0:
                     msg = "New Name already exists: %s" % dst_name
@@ -203,7 +207,7 @@ class record_a(Resource):
         try:
             existing_records = ib.get("record:a", { 'view': view, 'name': src_name })
         except Exception as e:
-            msg = "Error  new name exists check:%s:%s" % (src_name, str(e))
+            msg = "Error looking up existing name:%s:%s" % (src_name, str(e))
             self.logger.error(msg)
             return rest_error_response(400, msg)
         else:
@@ -216,16 +220,41 @@ class record_a(Resource):
         try:
             for record in existing_records:
                 ib.delete(record.get('_ref'))
+                self.logger.debug("deleting:%s:%s" % (src_name, record.get('_ref')))
         except Exception as e:
             msg = "Error deleting record:%s:%s" % (src_name, str(e))
             self.logger.error(msg)
             return rest_error_response(400, msg)
         
         # Create New Records
-        # FIXME
- 
-
-        return rest_response_error(400, detail="TODO: Method not complete yet")
+        template = {
+                'name': dst_name,
+                'view': view,
+                'comment': "DNS A record Updated by API",
+                'extattrs': {
+                    'Owner': { 'value': "DNSAPI" },
+                    'change_number': { "value": args.get('change_control') },
+                    }
+                }
+        try:
+            for address in args.get('addresses'):
+                payload = template.copy()
+                payload['ipv4addr'] = address
+                _ref = ib.add("record:a", payload)
+                self.logger.debug("added:%s:%s:%s" % (dst_name, address, _ref.replace('"', "")))
+        except Exception as e:
+            msg = "Error adding record:%s:%s" % (dst_name, str(e))
+            self.logger.error(msg)
+            return rest_error_response(400, msg)
+        response = {
+                'name': args.get('name'),
+                'domain': args.get('domain'),
+                'comment': "DNS A record Updated by API",
+                'addresses': args.get('addresses'),
+                'view': view,
+                "link": url_for('a_by_ref', view=view, domain=args.get('domain'), name=args.get('name'))
+        }
+        return response, 200
 
     # Delete
     def delete(self, view=None, domain=None, name=None):
