@@ -65,6 +65,16 @@
         "summary" : "Create an Infoblox host object",
         "description" : "Create a host object in Infoblox.  The host object will have both forward and reverse mapping records created.  A host object can only have 1 address associated with it.\n",
         "operationId" : "create_record_host",
+        "parameters" : [ {
+          "name" : "func",
+          "in" : "path",
+          "description" : "An optional function to perform",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "oneOf" : [ "hostnamebyip" ]
+          }
+        } ],
         "requestBody" : {
           "description" : "A HostRecordItem that describes the host record to be created\n",
           "required" : true,

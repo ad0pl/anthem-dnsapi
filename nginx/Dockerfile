@@ -15,5 +15,6 @@ COPY testcert.crt /etc/nginx/certs/cert.pem
 COPY testcert.key /etc/nginx/certs/cert.key
 
 RUN touch /usr/share/nginx/html/favicon.ico
-#COPY html2/docs/ /usr/share/nginx/html/
 COPY html2/index.html /usr/share/nginx/html/
+COPY anthem-dnsapi-v1.0.json /usr/share/nginx/html/
+COPY anthem-dnsapi-v1.0.yaml /usr/share/nginx/html/

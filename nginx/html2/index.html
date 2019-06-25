@@ -1704,8 +1704,9 @@ public class DefaultApiExample {
         DefaultApi apiInstance = new DefaultApi();
         HostRecordItem body = ; // HostRecordItem | A HostRecordItem that describes the host record to be created
 
+        String func = ; // String | An optional function to perform
         try {
-            HostRecordItem result = apiInstance.createRecordHost(body);
+            HostRecordItem result = apiInstance.createRecordHost(body, func);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling DefaultApi#createRecordHost");
@@ -1724,8 +1725,9 @@ public class DefaultApiExample {
         DefaultApi apiInstance = new DefaultApi();
         HostRecordItem body = ; // HostRecordItem | A HostRecordItem that describes the host record to be created
 
+        String func = ; // String | An optional function to perform
         try {
-            HostRecordItem result = apiInstance.createRecordHost(body);
+            HostRecordItem result = apiInstance.createRecordHost(body, func);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling DefaultApi#createRecordHost");
@@ -1749,11 +1751,13 @@ public class DefaultApiExample {
 //[apiConfig setApiKeyPrefix:@"Bearer" forApiKeyIdentifier:@"ibapauth"];
 HostRecordItem *body = ; // A HostRecordItem that describes the host record to be created
 
+String *func = ; // An optional function to perform
 
 DefaultApi *apiInstance = [[DefaultApi alloc] init];
 
 // Create an Infoblox host object
 [apiInstance createRecordHostWith:body
+    func:func
               completionHandler: ^(HostRecordItem output, NSError* error) {
                             if (output) {
                                 NSLog(@"%@", output);
@@ -1782,6 +1786,7 @@ cookieAuth.apiKey = "YOUR API KEY"
 var api = new AnthemSelfServiceDnsApi.DefaultApi()
 var body = ; // {{HostRecordItem}} A HostRecordItem that describes the host record to be created
 
+var func = ; // {{String}} An optional function to perform
 
 var callback = function(error, data, response) {
   if (error) {
@@ -1790,7 +1795,7 @@ var callback = function(error, data, response) {
     console.log('API called successfully. Returned data: ' + data);
   }
 };
-api.createRecordHost(body, callback);
+api.createRecordHost(bodyfunc, callback);
 </code></pre>
                             </div>
 
@@ -1821,11 +1826,12 @@ namespace Example
             var apiInstance = new DefaultApi();
             var body = new HostRecordItem(); // HostRecordItem | A HostRecordItem that describes the host record to be created
 
+            var func = new String(); // String | An optional function to perform
 
             try
             {
                 // Create an Infoblox host object
-                HostRecordItem result = apiInstance.createRecordHost(body);
+                HostRecordItem result = apiInstance.createRecordHost(body, func);
                 Debug.WriteLine(result);
             }
             catch (Exception e)
@@ -1852,9 +1858,10 @@ Swagger\Client\Configuration::getDefaultConfiguration()->setApiKey('ibapauth', '
 $api_instance = new Swagger\Client\ApiDefaultApi();
 $body = ; // HostRecordItem | A HostRecordItem that describes the host record to be created
 
+$func = ; // String | An optional function to perform
 
 try {
-    $result = $api_instance->createRecordHost($body);
+    $result = $api_instance->createRecordHost($body, $func);
     print_r($result);
 } catch (Exception $e) {
     echo 'Exception when calling DefaultApi->createRecordHost: ', $e->getMessage(), PHP_EOL;
@@ -1877,9 +1884,10 @@ $WWW::SwaggerClient::Configuration::api_key->{'ibapauth'} = 'YOUR_API_KEY';
 my $api_instance = WWW::SwaggerClient::DefaultApi->new();
 my $body = WWW::SwaggerClient::Object::HostRecordItem->new(); # HostRecordItem | A HostRecordItem that describes the host record to be created
 
+my $func = ; # String | An optional function to perform
 
 eval { 
-    my $result = $api_instance->createRecordHost(body => $body);
+    my $result = $api_instance->createRecordHost(body => $body, func => $func);
     print Dumper($result);
 };
 if ($@) {
@@ -1905,10 +1913,11 @@ swagger_client.configuration.api_key['ibapauth'] = 'YOUR_API_KEY'
 api_instance = swagger_client.DefaultApi()
 body =  # HostRecordItem | A HostRecordItem that describes the host record to be created
 
+func =  # String | An optional function to perform
 
 try: 
     # Create an Infoblox host object
-    api_response = api_instance.create_record_host(body)
+    api_response = api_instance.create_record_host(body, func)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling DefaultApi->createRecordHost: %s\n" % e)</code></pre>
@@ -1917,6 +1926,35 @@ except ApiException as e:
 
                           <h2>Parameters</h2>
 
+                            <div class="methodsubtabletitle">Path parameters</div>
+                            <table id="methodsubtable">
+                                <tr>
+                                  <th width="150px">Name</th>
+                                  <th>Description</th>
+                                </tr>
+                                  <tr><td style="width:150px;">func*</td>
+                                  <td>
+                                  
+                                  
+                                      <div id="d2e199_createRecordHost_func">
+                                          <div class="json-schema-view">
+                                              <div class="primitive">
+                                                  <span class="type">
+                                                      String
+                                                  </span>
+                                  
+                                                      <div class="inner description">
+                                                          An optional function to perform
+                                                      </div>
+                                              </div>
+                                                  <div class="inner required">
+                                                      Required
+                                                  </div>
+                                          </div>
+                                      </div>
+                                  </td>
+                                  </tr>
+                            </table>
 
 
                             <div class="methodsubtabletitle">Body parameters</div>
